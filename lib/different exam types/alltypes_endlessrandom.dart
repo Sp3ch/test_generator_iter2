@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:test_generator_iter2/roundedButton.dart';
 
@@ -7,11 +9,27 @@ import 'package:kb_lib_iter2/kb_lib_iter2.dart';
 class AllTypesEndlessRandomStarter extends StatelessWidget
 {
   final Graph graph;
-
-  AllTypesEndlessRandomStarter(this.graph);
+  StreamController<int> fromTopicSK;
+  StreamController<int?> toTopicSK;
+  int fromTopic=1;
+  int? toTopic;
+  AllTypesEndlessRandomStarter
+  (
+    this.graph,
+    this.fromTopicSK,
+    this.toTopicSK, 
+    this.fromTopic,
+    this.toTopic,
+    {super.key}
+  )
+  {
+    fromTopicSK.stream.listen((event) {fromTopic=event;});
+    toTopicSK.stream.listen((event) {toTopic=event;});
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) 
+  {
     return Column
     (
       children:<Widget>
@@ -25,8 +43,24 @@ class AllTypesEndlessRandomStarter extends StatelessWidget
         WidgetRoundedTextButton
         (
           text: "Начать бесконечную проверочную работу",
-          color: const Color.fromARGB(255, 158, 180, 208),
-          onPressed: 
+          color: 
+          graph.intervalApplicable(fromTopic, toTopic)
+          ? 
+          const Color.fromARGB(255, 158, 180, 208) 
+          : 
+          const Color.fromARGB(0, 158, 180, 208),
+          textStyle: TextStyle
+          (
+            color: 
+            graph.intervalApplicable(fromTopic, toTopic)
+            ?
+              const Color.fromARGB(255, 0, 0, 0)
+            : 
+            const Color.fromARGB(255, 131, 130, 130),
+          ),
+          onPressed:  
+          graph.intervalApplicable(fromTopic, toTopic)
+          ?     
           ()
           {
             Navigator.of(context).push
@@ -37,11 +71,19 @@ class AllTypesEndlessRandomStarter extends StatelessWidget
                 (context)
                   => QuestionPageMain
                   (
-                    Exam_AllTypes_EndlessRandom(graph,true)
+                    Exam_AllTypes_EndlessRandom
+                    (
+                      graph,true,
+                      fromTopic: fromTopic,
+                      toTopic: toTopic
+                    )
                   )
               )
             );
-          },
+          }
+          :
+          null
+          ,
         ),
       ]
     );

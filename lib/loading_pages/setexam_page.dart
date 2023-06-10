@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:kb_lib_iter2/kb_lib_iter2.dart';
 import '../different exam types/alltypes_endlessrandom.dart';
 import '../different exam types/alltypes_specifiedamount.dart';
+import 'package:flutter/services.dart';
 
 class SetExamPage extends StatelessWidget
 {
@@ -38,7 +40,18 @@ class SetExamPage extends StatelessWidget
           Align
           (
             alignment:Alignment.center,
-            child: SizedBox(width:400, child: SetExamWidget(graph))
+            child: SizedBox
+            (
+              width:400, 
+              child: SingleChildScrollView
+              (
+                child: Padding
+                (
+                  padding: const EdgeInsets.fromLTRB(0,10,0,10),
+                  child: SetExamWidget(graph),
+                )
+              )
+            )
           ),
         ],
       ))
@@ -63,13 +76,40 @@ class SetExamWidget extends StatefulWidget
 
 class SetExamWidgetState extends State<SetExamWidget>
 {
+  AllTypesSpecifiedAmountExamStarter? allTypesSpecifiedAmountExamStarter;
+  TextEditingController toTopicTEC = TextEditingController();
+  TextEditingController fromTopicTEC = TextEditingController();
+  StreamController<int> fromTopicSK = StreamController<int>.broadcast();
+  StreamController<int?> toTopicSK = StreamController<int?>.broadcast();
+  int fromTopic = 1;
+  int? toTopic;
   String typeOfExamSelected="";
+
+  
+  @override
+  void initState()
+  {
+    super.initState();
+    fromTopicSK.stream.listen((event) {setState(() {fromTopic=event;});});
+    toTopicSK.stream.listen((event) {setState(() {toTopic=event;});});
+  }
+
   @override
   Widget build (BuildContext context)
   {
-    return Column(
+    if (typeOfExamSelected=="allTasksSpecifiedAmount")
+    {
+      allTypesSpecifiedAmountExamStarter 
+      ??= AllTypesSpecifiedAmountExamStarter
+        (widget.graph, fromTopicSK, toTopicSK, fromTopic, toTopic);
+    }
+    return Column
+    (
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+      children: <Widget>
+      [
+        const Text("Выберите тип проверочной работы"),
+        const SizedBox(height: 10),
         Column
         (
           children:<Widget>
@@ -98,7 +138,135 @@ class SetExamWidgetState extends State<SetExamWidget>
             ),
           ]
         ),
-        const SizedBox(height:30),
+        const SizedBox(height:5),
+        const Divider(color: Colors.black,),
+        const Text("Название предмета:"),
+        Text(widget.graph.name ?? "[без имени]"),
+        const Divider(color: Colors.black,),
+        const SizedBox(height:5),
+        const Text("Выберите темы, по которым нужно сгенерировать задания."),
+        const SizedBox(height: 6),
+        Row
+        (
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          textBaseline: TextBaseline.alphabetic,
+          children:<Widget>
+          [
+            const Text("Начиная с темы "),
+            const SizedBox(width:10),
+            SizedBox
+            (
+              width:70,
+              height:30,
+              child: TextField
+              (
+                onChanged: (value) 
+                {
+                  if (value=="") {fromTopicSK.add(1);}
+                  else {fromTopicSK.add(int.parse(value));}
+                },
+                controller:fromTopicTEC,
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>
+                [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4)
+                ],
+                textAlignVertical: TextAlignVertical.bottom,
+                textAlign: TextAlign.center,
+                decoration:const InputDecoration
+                (
+                  hintText: "1",
+                  hintStyle: TextStyle(color: Color.fromARGB(85, 0, 0, 0)),
+                  focusedBorder: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide()),
+                ),
+              ),
+            ),
+            // const SizedBox(width: 20)
+          ]
+        ),
+        const SizedBox(height: 10),
+        Row
+        (
+          mainAxisAlignment: MainAxisAlignment.center,
+          // crossAxisAlignment: CrossAxisAlignment.center,
+          textBaseline: TextBaseline.alphabetic,
+          children:<Widget>
+          [
+            const Text("Заканчивая темой "),
+            const SizedBox(width:10),
+            SizedBox
+            (
+              width:70,
+              height:30,
+              child: TextField
+              (
+                onChanged: (value) 
+                {
+                  if (value=="") {toTopicSK.add(null);}
+                  else {toTopicSK.add(int.parse(value));}
+                },
+                controller:toTopicTEC,
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>
+                [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4)
+                ],
+                textAlignVertical: TextAlignVertical.bottom,
+                textAlign: TextAlign.center,
+                decoration:const InputDecoration
+                (
+                  hintText: "—",
+                  hintStyle: TextStyle(color: Color.fromARGB(85, 0, 0, 0)),
+                  focusedBorder: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide()),
+                ),
+              ),
+            ),
+            // const SizedBox(width: 20)
+          ]
+        ),
+        widget.graph.intervalApplicable(fromTopic, toTopic) 
+        ? 
+        const SizedBox()
+        : 
+        Column(
+          children: <Widget>
+          [
+            const SizedBox(height: 10),
+            Container 
+            (
+              decoration: BoxDecoration
+              (
+                color: Colors.amber,
+                border:Border.all
+                (
+                  color: const Color.fromARGB(255, 240, 84, 17),
+                  width: 3
+                ),
+              ),
+              child: const Padding
+              (
+                padding: EdgeInsets.fromLTRB(8,2,8,2),
+                child: Text
+                (
+                  "Диапазон номеров тем пуст или выходит за пределы тем в загруженном файле.",
+                  style: TextStyle
+                  (
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontFamily: "Courier New"
+                  ),
+                  textAlign: TextAlign.justify,
+                ),
+              )
+            ),
+          ],
+        ),
+        const SizedBox(height:10),
         typeOfExamSelected=="allTasksSpecifiedAmount" ? 
         Container
         (
@@ -113,10 +281,9 @@ class SetExamWidgetState extends State<SetExamWidget>
           child: Padding
           (
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 15),
-            child: AllTypesSpecifiedAmountExamStarter(widget.graph),
+            child: allTypesSpecifiedAmountExamStarter!,
           )
         )
-        // AllTypesSpecifiedAmountExamStarter()
         :
         typeOfExamSelected=="allTasksEndless" ?
         Container
@@ -132,12 +299,18 @@ class SetExamWidgetState extends State<SetExamWidget>
           child: Padding
           (
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-            child: AllTypesEndlessRandomStarter(widget.graph)
+            child: AllTypesEndlessRandomStarter
+            (
+              widget.graph, 
+              fromTopicSK, 
+              toTopicSK,
+              fromTopic,
+              toTopic
+            )
           )
         )
         :
         const SizedBox()
-        // the placed widget
       ],
     );    
   }      

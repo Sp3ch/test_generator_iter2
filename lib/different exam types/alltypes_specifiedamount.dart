@@ -1,15 +1,9 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kb_lib_iter2/kb_lib_iter2.dart';
 import 'package:test_generator_iter2/roundedButton.dart';
-
 import '../question_page/question_page.dart';
-
-// TODO очень плохой код
-// в качестве идентификаторов используются локализованные строки
-// можно 
 
 class AllTypesSpecifiedAmountExamStarter extends StatefulWidget
 {
@@ -17,14 +11,21 @@ class AllTypesSpecifiedAmountExamStarter extends StatefulWidget
   Map<Type, String> typeNames = <Type,String>{};
   final Graph graph;
   List<Widget> column = <Widget>[];
-  final StreamController<String> sk = StreamController<String>();
-  final AllTypesSpecifiedAmountExamStarterState state 
-    = AllTypesSpecifiedAmountExamStarterState();
+  final StreamController<String> amountsChangedSignal = StreamController<String>.broadcast();
+  // AllTypesSpecifiedAmountExamStarterState state = AllTypesSpecifiedAmountExamStarterState();
+  StreamController<int> fromTopicSK;
+  StreamController<int?> toTopicSK;
+  int fromTopic = 1;
+  int? toTopic;
 
   // AllTypesSpecifiedAmountExamStarter ()
   AllTypesSpecifiedAmountExamStarter 
   (
     this.graph,
+    this.fromTopicSK,
+    this.toTopicSK,
+    this.fromTopic,
+    this.toTopic,
     {super.key}
   )
   {
@@ -34,10 +35,9 @@ class AllTypesSpecifiedAmountExamStarter extends StatefulWidget
 
     //
     typeNames[Question_WhatIsDefinedHereAll_TypeIn]
-      ="Впсиать все определяемые термины";
+      = "Впсиать все определяемые термины";
     typeNames[Question_WhatIsDefinedHereOneRandom_TypeIn]
-      ="Вписать случайно выбранный программой определяемый термин";
-
+      = "Вписать случайно выбранный программой определяемый термин";
     for (Type type in types.keys)
     {
       column.add
@@ -46,13 +46,13 @@ class AllTypesSpecifiedAmountExamStarter extends StatefulWidget
         (
           type,
           typeNames[type]!,
-          sk,
+          amountsChangedSignal,
           key:Key(type.toString())
         )
       );
       column.add(const SizedBox(height:5));
     }
-    sk.stream.listen((event) {state.setState(() {updateTypes();});});
+    // amountsChangedSignal.stream.listen((event) {state.setState(() {updateTypes();});});
   }
 
   void updateTypes()
@@ -71,9 +71,9 @@ class AllTypesSpecifiedAmountExamStarter extends StatefulWidget
   }
 
   @override
-  State<StatefulWidget> createState() {
-    return state;
-  }
+  State<StatefulWidget> createState() 
+  // {return state;}
+  {return AllTypesSpecifiedAmountExamStarterState();}
 }
 
 class AllTypesSpecifiedAmountExamStarterState 
@@ -81,6 +81,9 @@ extends State<AllTypesSpecifiedAmountExamStarter>
 {
   late Exam_AllTypes_SpecifiedAmounts exam;
   List<Widget> column = <Widget>[];
+  late StreamSubscription<String> amountsChangedSignalSS;
+  late StreamSubscription<int> fromTopicSS;
+  late StreamSubscription<int?> toTopicSS;
 
   AllTypesSpecifiedAmountExamStarterState();
 
@@ -94,6 +97,30 @@ extends State<AllTypesSpecifiedAmountExamStarter>
   }
   
   @override
+  void initState()
+  {
+    super.initState();
+    fromTopicSS = widget.fromTopicSK.stream
+      .listen((event) {setState(() {widget.fromTopic=event;});});
+    toTopicSS = widget.toTopicSK.stream
+      .listen((event) {setState(() {widget.toTopic=event;});});
+    amountsChangedSignalSS 
+      = widget.amountsChangedSignal.stream
+        .listen((event) {setState(() {widget.updateTypes();});});
+  
+  }
+
+  @override
+  void dispose()
+  {
+    super.dispose();
+    amountsChangedSignalSS.cancel();
+    fromTopicSS.cancel();
+    toTopicSS.cancel();
+  }
+
+
+  @override
     Widget build (BuildContext context)
     {
       return 
@@ -105,7 +132,7 @@ extends State<AllTypesSpecifiedAmountExamStarter>
           [
             const Text
             (
-              "Генерируется указанное для каждого типа количество заданий.\nРаботу можно закончить досрочно. Общая правильность работы оценивается относительно всего количества заданий. В ошибки не входят задания, которые не были решены или сгенерированы до окончания количества заданий.",
+              "Генерируется указанное для каждого типа количество заданий.\nРаботу можно закончить досрочно. Общая правильность работы оценивается относительно всего количества заданий. В ошибки не входят задания, которые не были сгенерированы до окончания количества заданий.",
               textAlign: TextAlign.justify,
             ),
             const SizedBox(height:25),
@@ -120,17 +147,26 @@ extends State<AllTypesSpecifiedAmountExamStarter>
             (
               text: "Начать проверочную работу", 
               color: 
-                canContinue ? 
+                canContinue && 
+                widget.graph.intervalApplicable(widget.fromTopic, widget.toTopic)
+                ? 
                 const Color.fromARGB(255, 158, 180, 208) 
-                : const Color.fromARGB(0, 158, 180, 208),
+                : 
+                const Color.fromARGB(0, 158, 180, 208),
               textStyle: TextStyle
               (
                 color: 
-                  canContinue ?
+                  canContinue && 
+                  widget.graph.intervalApplicable(widget.fromTopic, widget.toTopic)
+                  ?
                    const Color.fromARGB(255, 0, 0, 0)
-                  : const Color.fromARGB(255, 131, 130, 130),
+                  : 
+                  const Color.fromARGB(255, 131, 130, 130),
               ),
-              onPressed: canContinue ? 
+              onPressed: 
+              canContinue && 
+              widget.graph.intervalApplicable(widget.fromTopic, widget.toTopic)
+              ? 
               ()
               {
                 // for (Widget numberInput in widget.column)
@@ -155,13 +191,16 @@ extends State<AllTypesSpecifiedAmountExamStarter>
                     widget.types[Question_WhatIsDefinedHereAll_TypeIn],
                   question_WhatIsDefinedHereOneRandom_TypeIn: 
                     widget.types[Question_WhatIsDefinedHereOneRandom_TypeIn],
+                  fromTopic: widget.fromTopic,
+                  toTopic: widget.toTopic
                 );
                 Navigator.of(context).push
                 (
                   MaterialPageRoute(builder: (context)=>QuestionPageMain(exam))
                 );
               }
-              : null,
+              : 
+              null,
             )
           ]
       );
@@ -173,12 +212,12 @@ class TasksAmountInputer extends StatefulWidget
   final Type identifier;
   final String text;
   final TextEditingController _tec = TextEditingController();
-  final StreamController<String> sk;
+  final StreamController<String> amountChangedSignal;
   TasksAmountInputer
   (
     this.identifier, 
     this.text, 
-    this.sk, 
+    this.amountChangedSignal, 
     {super.key,}
   );
 
@@ -209,7 +248,7 @@ class TasksAmountInputerState extends State<TasksAmountInputer>
           height:30,
           child: TextField
           (
-            onChanged: (value){widget.sk.add(value);},
+            onChanged: (value){widget.amountChangedSignal.add(value);},
             controller:widget._tec,
             keyboardType: TextInputType.number,
             inputFormatters: <TextInputFormatter>

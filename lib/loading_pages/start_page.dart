@@ -37,35 +37,39 @@ class LoadPageMain extends StatelessWidget
     Scaffold
     (
       appBar: AppBar(toolbarHeight: 0,),
-      body: Stack
+      body: Center
       (
-        children: <Widget>
-        [
-          Align
+        child: SingleChildScrollView
+        (
+          child: SizedBox
           (
-            alignment: Alignment.center,
-            child: Opacity(
-              opacity: 0.18, 
-              child: Image.asset
-              (
-                'assets/logo.png',
-              ),
-            )
-          ),
-          const Center
-          (
-            child: SizedBox
+            width:400,
+            child: Stack
             (
-              width:400,
-              child: Padding
-              (
-                padding: const EdgeInsets.all(16.0),
-                // child: LoadPage()
-                child: LoadPageN()
-              )
-            )
-          )
-        ]
+              children: <Widget>
+              [
+                Align
+                (
+                  alignment: Alignment.center,
+                  child: Opacity(
+                    opacity: 0.18, 
+                    child: Image.asset('assets/logo.png'),
+                  )
+                ),
+                const Align
+                (
+                  alignment: Alignment.center,
+                  child: Padding
+                  (
+                    padding: EdgeInsets.all(16.0),
+                    // child: LoadPage()
+                    child: LoadPageN()
+                  )
+                ),
+              ]
+            ),
+          ),
+        ),
       )
     );
   }
