@@ -124,7 +124,7 @@ class LoadPageNState extends State<LoadPageN>
         catch (e)
         {
           // Graph failed to form
-          errorMessages.add("Чтение знаний из файла не удалось.\nФайл знаний сломан.");
+          errorMessages.add("Чтение знаний из файла не удалось.\nФайл знаний содержит ошибку.");
           if (e is FormatException && e.offset!=null)
           {
             if (e.offset!<10)
@@ -240,7 +240,7 @@ class LoadPageNState extends State<LoadPageN>
           {
             if (e is FormatException)
             {
-              errorMessages.last+="\n$e";
+              errorMessages.last+="\n${e.message}";
             }
             else
             {
@@ -276,7 +276,7 @@ class LoadPageNState extends State<LoadPageN>
         }
         else if (e is FormatException) 
         {
-          errorMessages.add("Format: /n$e");
+          errorMessages.add("Ошибка формата: /n${e.message}");
           setState
           (
             ()
@@ -288,7 +288,7 @@ class LoadPageNState extends State<LoadPageN>
         }
         else if (e is FileSystemException)
         {
-          errorMessages.add("Не удалось прочитать содержимое файла как текстовый файл UTF-8 \n$e");
+          errorMessages.add("Не удалось прочитать содержимое файла как текстовый файл UTF-8 \nОтветом системы было: ${e.osError}");
           setState
           (
             ()
@@ -373,10 +373,20 @@ class LoadPageNState extends State<LoadPageN>
     );
   }
 
-  void initializeOpeningTheFile()
+  void initializeOpeningTheFile(path)
   {
-    if (filenameTextEditingController.text.trim()=="") {findAndReadFile();}
-    else {readFileByPath("${filenameTextEditingController.text.trim()}.knowledge");}
+    if (path.trim()=="") {findAndReadFile();}
+    else 
+    {
+      if (path.trim().endsWith(".knowledge"))
+      {
+        readFileByPath(path.trim());  
+      }
+      else 
+      {
+        readFileByPath("${path.trim()}.knowledge");
+      }
+    }
   }
 
 
@@ -411,15 +421,18 @@ class LoadPageNState extends State<LoadPageN>
                   child: TextField
                   (
                     controller: filenameTextEditingController,
-                    decoration: const InputDecoration
+                    decoration: InputDecoration
                     (
-                      suffixText: ".knowledge",
+                      suffixText: filenameTextEditingController.text.trim().endsWith(".knowledge") 
+                      ?
+                      ""
+                      :
+                      ".knowledge",
                       hintMaxLines: 1,
                       hintText: "путь к файлу",
-                      // focusedBorder: ,
-                      enabledBorder:OutlineInputBorder(borderSide:BorderSide()),
-                      // labelText: 'Ответ',
+                      enabledBorder: const OutlineInputBorder(borderSide:BorderSide()),
                     ),
+                    onChanged: (value){setState((){});},
                   )
                 ),
               ),
@@ -448,16 +461,16 @@ class LoadPageNState extends State<LoadPageN>
                       (
                         (val) 
                         {
-                          readFileByPath
-                          ("${filenameTextEditingController.text.trim()}.knowledge");
+                          initializeOpeningTheFile
+                          (filenameTextEditingController.text.trim());
                         }
                       );
                     }
                     else 
                     {
-                      readFileByPath
+                      initializeOpeningTheFile
                       (
-                        "${filenameTextEditingController.text.trim()}.knowledge"
+                        filenameTextEditingController.text.trim()
                       );
                     }
                   }
