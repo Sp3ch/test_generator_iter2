@@ -108,8 +108,12 @@ class SetExamWidgetState extends State<SetExamWidget>
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>
       [
-        const Text("Выберите тип проверочной работы"),
-        const SizedBox(height: 10),
+        const Text
+        (
+          "Выберите тип проверочной работы",
+          style: TextStyle(fontSize: 20),
+        ),
+        const SizedBox(height: 12),
         Column
         (
           children:<Widget>
@@ -140,12 +144,22 @@ class SetExamWidgetState extends State<SetExamWidget>
         ),
         const SizedBox(height:5),
         const Divider(color: Colors.black,),
-        const Text("Название предмета:"),
+        const Text
+        (
+          "Название предмета:",
+          style: TextStyle(fontSize: 16),
+          textAlign: TextAlign.center,
+        ),
         Text(widget.graph.name ?? "[без имени]"),
         const Divider(color: Colors.black,),
         const SizedBox(height:5),
-        const Text("Выберите темы, по которым нужно сгенерировать задания."),
-        const SizedBox(height: 6),
+        const Text
+        (
+          "Выберите темы, по которым нужно сгенерировать задания.",
+          style: TextStyle(fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height:15),
         Row
         (
           mainAxisAlignment: MainAxisAlignment.center,
